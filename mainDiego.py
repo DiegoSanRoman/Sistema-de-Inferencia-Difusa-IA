@@ -46,6 +46,7 @@ for app in applications:
         for setid in fuzzySets:
             if fuzzySets[setid].var == var:
                 fuzzySets[setid].memDegree = skf.interp_membership(fuzzySets[setid].x, fuzzySets[setid].y, val)
-                print(setid, fuzzySets[setid].memDegree\n)
+                print(setid, fuzzySets[setid].memDegree)
                 break
+    print("")
 
