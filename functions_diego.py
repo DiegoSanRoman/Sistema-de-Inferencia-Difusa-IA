@@ -13,6 +13,7 @@ riskLevels = readFuzzySetsFile('Risks.txt')
 rules = readRulesFile()
 # Read applications from file
 applications = readApplicationsFile()
+
 # -------------------------- STEP 2: FUZZIFICATION --------------------------
 membership_degrees = {}
 for app in applications:
@@ -44,11 +45,39 @@ for app_id, app_membership in membership_degrees.items():
         for i, mem_degree in enumerate(membership_list):
             print(f"  {fuzzy_sets_for_variable[i].label}: {mem_degree}")
 
-# -------------------------- STEP 3: RULES ANALYSIS --------------------------
-# We iterate for each rule and we need to analize it to see the final value
-for setid in fuzzySets:
-    plt.plot(fuzzySets[setid].x, fuzzySets[setid].y, label=setid)
-    plt.legend()
-    plt.title('Membership functions')
-    plt.show()
+# ------------------------- STEP 3: RULES EVALUATION -------------------------
+risk_levels = {}
+for app in applications:
+    # Initialize a dictionary to store the risk levels for each rule
+    rule_risks = {}
+    for rule in rules:
+        # Check if all antecedents of the rule are applicable to the application
+        if all(antecedent in membership_degrees[app.appId] for antecedent in rule.antecedent):
+            # Get the membership degrees for the antecedents of the rule
+            antecedent_degrees = [membership_degrees[app.appId][antecedent] for antecedent in rule.antecedent]
+            # Calculate the rule's strength as the minimum of these membership degrees
+            rule_strength = min(antecedent_degrees)
+            # Update the risk level for the rule using the rule's consequent and strength
+            rule_risks[rule.ruleName] = min(rule_strength, skf.interp_membership(riskLevels[rule.consequent].x, riskLevels[rule.consequent].y, rule_strength))
+    # Update the risk levels for the application using the maximum risk level from all the rules
+    risk_levels[app.appId] = max(rule_risks.values()) if rule_risks else 0
 
+# We print for checking
+for app_id, risk_level in risk_levels.items():
+    print(f"Application ID: {app_id}, Risk Level: {risk_level}")
+
+# ------------------------- STEP 4: DEFFUZIFICATION -------------------------
+risk_levels_defuzz = {}
+for app in applications:
+    # Get the risk level for the application
+    risk_level = risk_levels[app.appId]
+    # Calculate the defuzzified risk level using the centroid method
+    risk_level_defuzz = skf.defuzz(riskLevels[rule.consequent].x, riskLevels[rule.consequent].y, 'centroid')
+    risk_levels_defuzz[app.appId] = risk_level_defuzz
+
+# Open the file in write mode
+with open('results.txt', 'w') as file:
+    # Iterate over the risk levels
+    for app_id, risk_level_defuzz in risk_levels_defuzz.items():
+        # Write the application ID and the defuzzified risk level to the file
+        file.write(f"Application ID: {app_id}, Defuzzified Risk Level: {risk_level_defuzz}\n")
