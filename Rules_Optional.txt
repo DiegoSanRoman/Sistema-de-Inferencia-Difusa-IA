@@ -1,0 +1,3 @@
+Rule51, Risk=Low, IncomeLevel=High AND Assets=Abundant AND Amount=Small
+Rule52, Risk=High, Age=Young OR Age=Elder AND Amount=Big
+Rule53, Risk=Medium, IncomeLevel=Med AND (Amount=Big OR Amount=VeryBig)
